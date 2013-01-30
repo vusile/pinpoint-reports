@@ -96,7 +96,8 @@ function __construct()
 			show_error($e->getMessage().' --- '.$e->getTraceAsString());
 		}
 	}
-	
+
+
 	/*function check_previous_unpaid($key)
 	{
 		$this->db->where('payment_status',0);
@@ -143,6 +144,36 @@ function __construct()
 		//print_r($data);
 		
 	}
+
+	function websites_campaigns()
+	{
+		try{
+
+			$datas['websites']=$this->db->get('webs');
+			$date = new DateTime(date("01-10-2012"));
+
+			$list = '';
+
+			while($date->format("Y-m")!=date('Y-m'))
+			{
+				$datas['months'][$date->format("Y-m")] = $date->format("F Y");
+				$date->add(new DateInterval('P1M'));
+			}
+
+
+
+			
+
+			$this->load->view('header');
+			$this->load->view('select',$datas);
+			$this->load->view('footer');
+
+			//$this->db->where('start_date', '2012-10-01');
+		}catch(Exception $e){
+			show_error($e->getMessage().' --- '.$e->getTraceAsString());
+		}
+	}
+
 	
 	function campaign_types()
 	{
