@@ -148,7 +148,7 @@ function __construct()
 	function websites_campaigns()
 	{
 		try{
-
+			$this->db->order_by('website_name');
 			$datas['websites']=$this->db->get('webs');
 			$date = new DateTime(date("01-10-2012"));
 
@@ -188,6 +188,29 @@ function __construct()
 		}catch(Exception $e){
 			show_error($e->getMessage().' --- '.$e->getTraceAsString());
 		}
+	}
+
+	function get_campaigns()
+	{
+		$this->db->where('id', $_POST['website']);
+		$website=$this->db->get('webs');
+		$campaigns[]=array();
+		$date = explode('-', $_POST['month']);
+		$query="select * from campaignz where month(start_date) = " . $date[1] . " and year(start_date) = " . $date[0];
+		$res = $this->db->query($query);
+		foreach($res->result() as $r)
+		{
+			$campaigns[]=$r->id;
+		}
+
+		$this->db->where_in('campaign', $campaigns);
+		$this->db->where('website', $_POST['website']);
+		$websites_campaigns=$this->db->get('websites_campaigns');
+
+		$this->load->view('header');
+		$this->load->view('deliveries',$datas);
+		$this->load->view('footer');
+	
 	}
 	
 	

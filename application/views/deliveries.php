@@ -1,4 +1,4 @@
-<form method="post" action ="campaigns/get_campaigns">
+<form method="post" action ="campaigns/save_deliveries">
   <fieldset>
      <label>Website</label>
      <select name = "website" id ="website">
