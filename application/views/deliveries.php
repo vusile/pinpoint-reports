@@ -1,20 +1,14 @@
+<h2>Website: <?php echo $website_name; ?></h2>
 <form method="post" action ="campaigns/save_deliveries">
   <fieldset>
-     <label>Website</label>
-     <select name = "website" id ="website">
-     <option value ="">Select One</option>
-	<?php foreach($websites->result() as $website): ?>
-    	<option value = "<?php echo $website->id ?>"><?php echo $website->website_name ?></option>
+    <?php foreach($websites_campaigns->result() as $camp): ?>
+     <label><strong><?php echo $campaign_names[$camp->campaign] ?></strong></label>
+     Deliveries: <input type = "text" name = "deliveries-<?php echo $camp->campaign ?>" id ="deliveries-<?php echo $camp->campaign ?>" ><br>
+     Percentage: <input type = "text" name = "percentage-<?php echo $camp->campaign ?>" id ="percentage-<?php echo $camp->campaign ?>" value = "50">
 
 	<?php endforeach; ?>
-	</select>
-     <label>Month</label>
-     <select name = "month" id ="month">
-     <option value ="">Select One</option>	
-	<?php foreach($months as $key=>$value): ?>
-		<option value = "<?php echo $key ?>"><?php echo $value ?></option>
-	<?php endforeach; ?>
-</select>
-    <button type="submit" class="btn">Submit</button>
+    <input type = "hidden" name = "website" id = "website" value="<?php echo $website_id; ?>" />
+    <input type = "hidden" name = "string" id = "string" value="<?php echo $campaigns_string; ?>" />
+    <br><button type="submit" class="btn">Submit</button>
   </fieldset>
 </form>
