@@ -99,23 +99,31 @@ function __construct()
 	}
 
 
-	/*function check_previous_unpaid($key)
+	function check_previous_unpaid($key,$website)
 	{
-		$this->db->where('payment_status',0);
+		//$this->db->where('payment_status',0);
+		$unpaid = 0;
 		$this->db->where('id',$key);
 		$campaign_obj=$this->db->get('campaignz');
 		
 		$campaign = $campaign_obj->row();
-		$data[$key] = $key;
-		
-		if($campaign->previous_campaign > 0)
+		if($campaign->previous_campaign != 0)
 		{
-			$data[$campaign->previous_campaign] = $campaign->previous_campaign;
-			$this->check_previous_unpaid($campaign->previous_campaign);
+			$this->db->where('website', $website);
+			$this->db->where('campaign', $campaign->previous_campaign);
+			$trafficked=$this->db->get('websites_campaigns');
+			if($trafficked->num_rows() > 0)
+			{
+				return ($unpaid + $trafficked->row()->value_after_percentage + $this->check_previous_unpaid($campaign->previous_campaign,$website));
+			}
+
+			else return 0;
 		}
-		return $data;
+
+		else
+			return 0;
 			
-	}*/
+	}
 	
 	
 	function make_payment($primary_key)
@@ -260,12 +268,12 @@ function __construct()
 
 			$data['website']=$_POST['website'];
 			$data['campaign']=$campaign;
-			$data['delivery']=$_POST['deliveries-' . $campaign];
+			$data['deliveries']=$_POST['deliveries-' . $campaign];
 
 
 			$data['percentage']=$_POST['percentage-' . $campaign];
 
-			$data['value_before_percentage'] = $data['delivery'] * $effective_cpa_cpc_or_cpm;
+			$data['value_before_percentage'] = $data['deliveries'] * $effective_cpa_cpc_or_cpm;
 			if($campaign_type == 1)
 				$data['value_before_percentage'] = $data['value_before_percentage']/1000;
 			$data['value_after_percentage'] = $data['value_before_percentage']  * ($data['percentage']/100);
@@ -277,10 +285,42 @@ function __construct()
 		
 	}
 
-
-	function gen_report()
+ 	function gen_report()
 	{
-		
+		$date = explode('-', $_POST['month']);
+		$query="select * from campaignz where month(start_date) = " . $date[1] . " and year(start_date) = " . $date[0];
+		$res = $this->db->query($query);
+		foreach($res->result() as $r)
+		{
+			$campaigns[]=$r->id;
+			$campaign_names[$r->id]=$r->name;
+			$campaign_effectives[$r->id] = $r->effective_cpa_cpc_or_cpm;
+		}
+
+
+		$this->db->where_in('campaign', $campaigns);
+		$this->db->where('website', $_POST['website']);
+		$websites_campaigns=$this->db->get('websites_campaigns');
+
+		$table = "<table border='1'>";
+		$table .= "<tr><th>Campaign Name</th><th>Delivery</th><th>effective CPA, CPC or CPM</th><th>Value</th><th>%</th><th>Revenue</th><th>Previous Unpaid</th><th>Total Unapid</th></tr>";
+		foreach($websites_campaigns->result() as $cmp)
+		{
+			$unpaid = $this->check_previous_unpaid($cmp->campaign, $_POST['website']);
+			$table .= "<tr>";
+			$table .= "<td>". $campaign_names[$cmp->campaign] ."</td>";
+			$table .= "<td>". $cmp->deliveries ."</td>";
+			$table .= "<td>". $campaign_effectives[$cmp->campaign] ."</td>";
+			$table .= "<td>". $cmp->value_before_percentage ."</td>";
+			$table .= "<td>". $cmp->percentage ."</td>";
+			$table .= "<td>". $cmp->value_after_percentage ."</td>";
+			$table .= "<td>" .  $unpaid  . "</td>";
+			$table .= "<td>". ($cmp->value_after_percentage + $unpaid) ."</td>";
+			$table .= "</tr>";
+		}
+		$table .= "</table>";
+
+		echo $table;
 	}
 	
 	

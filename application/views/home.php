@@ -13,7 +13,7 @@
       <a href = "campaigns/websites_campaigns"><img src = "img/Websites-Campaigns-btn.png" /></a>
     </div>
 	<div class="span2">
-      <a href = "reports"><img src = "img/Reports-btn.png" /></a>
+      <a href = "campaigns/websites_campaigns/1"><img src = "img/Reports-btn.png" /></a>
     </div>
     </div>
 </div>

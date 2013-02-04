@@ -1,7 +1,7 @@
 <?php if(isset($report)): ?>
-<form method="post" action ="campaigns/get_campaigns">
-<?php else: ?>
 <form method="post" action ="campaigns/gen_report">
+<?php else: ?>
+<form method="post" action ="campaigns/get_campaigns">
 <?php endif; ?>
 
   <fieldset>
