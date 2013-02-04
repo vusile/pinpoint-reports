@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 3.5.1
+-- version 3.4.10.1
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Feb 04, 2013 at 04:03 AM
--- Server version: 5.5.24-log
--- PHP Version: 5.4.3
+-- Generation Time: Feb 04, 2013 at 02:10 PM
+-- Server version: 5.5.20
+-- PHP Version: 5.3.10
 
 SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS `campaignz` (
   `effective_cpa_cpc_or_cpm` float NOT NULL,
   `previous_campaign` int(11) NOT NULL,
   `payment_status` int(11) NOT NULL,
+  `payment_date` date NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=5 ;
 
@@ -66,11 +67,11 @@ CREATE TABLE IF NOT EXISTS `campaignz` (
 -- Dumping data for table `campaignz`
 --
 
-INSERT INTO `campaignz` (`id`, `name`, `advertiser`, `start_date`, `end_date`, `budget`, `type`, `booked`, `delivered`, `effective_cpa_cpc_or_cpm`, `previous_campaign`, `payment_status`) VALUES
-(1, 'Airtel SMS Kichizi', 1, '2012-12-01', '2012-12-31', 350, 2, 700, 695, 0.5, 2, 1),
-(2, 'Airtel Branding Campaign', 1, '2012-11-01', '2012-11-30', 350, 2, 700, 752, 0.465426, 3, 1),
-(3, 'Airtel Modem', 1, '2012-10-01', '2012-10-31', 350, 2, 700, 766, 0.456919, 0, 1),
-(4, 'Vodacom', 2, '2012-10-01', '2012-10-31', 1500, 1, 1350000, 1350064, 1.11106, 0, 1);
+INSERT INTO `campaignz` (`id`, `name`, `advertiser`, `start_date`, `end_date`, `budget`, `type`, `booked`, `delivered`, `effective_cpa_cpc_or_cpm`, `previous_campaign`, `payment_status`, `payment_date`) VALUES
+(1, 'Airtel SMS Kichizi', 1, '2012-12-01', '2012-12-31', 350, 2, 700, 695, 0.5, 2, 1, '0000-00-00'),
+(2, 'Airtel Branding Campaign', 1, '2012-11-01', '2012-11-30', 350, 2, 700, 752, 0.465426, 3, 2, '2012-12-04'),
+(3, 'Airtel Modem', 1, '2012-10-01', '2012-10-31', 350, 2, 700, 766, 0.456919, 0, 2, '2012-11-01'),
+(4, 'Vodacom', 2, '2012-10-01', '2012-10-31', 1500, 1, 1350000, 1350064, 1.11106, 0, 1, '0000-00-00');
 
 -- --------------------------------------------------------
 
@@ -162,6 +163,7 @@ CREATE TABLE IF NOT EXISTS `websites_campaigns` (
   `value_before_percentage` float NOT NULL,
   `value_after_percentage` float NOT NULL,
   `priority` int(11) NOT NULL,
+  `invoiced` int(11) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=33 ;
 
@@ -169,39 +171,39 @@ CREATE TABLE IF NOT EXISTS `websites_campaigns` (
 -- Dumping data for table `websites_campaigns`
 --
 
-INSERT INTO `websites_campaigns` (`id`, `website`, `campaign`, `deliveries`, `percentage`, `value_before_percentage`, `value_after_percentage`, `priority`) VALUES
-(1, 4, 1, 0, 0, 0, 0, 0),
-(2, 7, 1, 0, 0, 0, 0, 1),
-(3, 6, 1, 0, 0, 0, 0, 2),
-(4, 8, 1, 0, 0, 0, 0, 3),
-(5, 2, 1, 0, 0, 0, 0, 4),
-(6, 5, 1, 0, 0, 0, 0, 5),
-(7, 3, 1, 0, 0, 0, 0, 6),
-(8, 1, 1, 500, 50, 250, 125, 7),
-(9, 4, 2, 0, 0, 0, 0, 0),
-(10, 7, 2, 0, 0, 0, 0, 1),
-(11, 6, 2, 0, 0, 0, 0, 2),
-(12, 8, 2, 0, 0, 0, 0, 3),
-(13, 2, 2, 0, 0, 0, 0, 4),
-(14, 5, 2, 0, 0, 0, 0, 5),
-(15, 3, 2, 0, 0, 0, 0, 6),
-(16, 1, 2, 600, 50, 279.256, 139.628, 7),
-(17, 4, 3, 0, 0, 0, 0, 0),
-(18, 7, 3, 0, 0, 0, 0, 1),
-(19, 6, 3, 0, 0, 0, 0, 2),
-(20, 8, 3, 0, 0, 0, 0, 3),
-(21, 2, 3, 0, 0, 0, 0, 4),
-(22, 5, 3, 0, 0, 0, 0, 5),
-(23, 3, 3, 0, 0, 0, 0, 6),
-(24, 1, 3, 350, 50, 159.922, 79.9608, 7),
-(25, 4, 4, 0, 0, 0, 0, 0),
-(26, 7, 4, 0, 0, 0, 0, 1),
-(27, 6, 4, 0, 0, 0, 0, 2),
-(28, 8, 4, 0, 0, 0, 0, 3),
-(29, 2, 4, 0, 0, 0, 0, 4),
-(30, 5, 4, 0, 0, 0, 0, 5),
-(31, 3, 4, 0, 0, 0, 0, 6),
-(32, 1, 4, 1057193, 50, 1174.6, 587.302, 7);
+INSERT INTO `websites_campaigns` (`id`, `website`, `campaign`, `deliveries`, `percentage`, `value_before_percentage`, `value_after_percentage`, `priority`, `invoiced`) VALUES
+(1, 4, 1, 0, 0, 0, 0, 0, 0),
+(2, 7, 1, 0, 0, 0, 0, 1, 0),
+(3, 6, 1, 0, 0, 0, 0, 2, 0),
+(4, 8, 1, 0, 0, 0, 0, 3, 0),
+(5, 2, 1, 0, 0, 0, 0, 4, 0),
+(6, 5, 1, 0, 0, 0, 0, 5, 0),
+(7, 3, 1, 0, 0, 0, 0, 6, 0),
+(8, 1, 1, 500, 50, 250, 125, 7, 0),
+(9, 4, 2, 0, 0, 0, 0, 0, 0),
+(10, 7, 2, 0, 0, 0, 0, 1, 0),
+(11, 6, 2, 0, 0, 0, 0, 2, 0),
+(12, 8, 2, 0, 0, 0, 0, 3, 0),
+(13, 2, 2, 0, 0, 0, 0, 4, 0),
+(14, 5, 2, 0, 0, 0, 0, 5, 0),
+(15, 3, 2, 0, 0, 0, 0, 6, 0),
+(16, 1, 2, 600, 50, 279.256, 139.628, 7, 0),
+(17, 4, 3, 0, 0, 0, 0, 0, 0),
+(18, 7, 3, 0, 0, 0, 0, 1, 0),
+(19, 6, 3, 0, 0, 0, 0, 2, 0),
+(20, 8, 3, 0, 0, 0, 0, 3, 0),
+(21, 2, 3, 0, 0, 0, 0, 4, 0),
+(22, 5, 3, 0, 0, 0, 0, 5, 0),
+(23, 3, 3, 0, 0, 0, 0, 6, 0),
+(24, 1, 3, 350, 50, 159.922, 79.9608, 7, 0),
+(25, 4, 4, 0, 0, 0, 0, 0, 0),
+(26, 7, 4, 0, 0, 0, 0, 1, 0),
+(27, 6, 4, 0, 0, 0, 0, 2, 0),
+(28, 8, 4, 0, 0, 0, 0, 3, 0),
+(29, 2, 4, 0, 0, 0, 0, 4, 0),
+(30, 5, 4, 0, 0, 0, 0, 5, 0),
+(31, 3, 4, 0, 0, 0, 0, 6, 0),
+(32, 1, 4, 1057193, 50, 1174.6, 587.302, 7, 0);
 
 -- --------------------------------------------------------
 

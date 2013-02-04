@@ -109,15 +109,26 @@ function __construct()
 		$campaign = $campaign_obj->row();
 		if($campaign->previous_campaign != 0)
 		{
-			$this->db->where('website', $website);
-			$this->db->where('campaign', $campaign->previous_campaign);
-			$trafficked=$this->db->get('websites_campaigns');
-			if($trafficked->num_rows() > 0)
+			
+			$this->db->where('id', $campaign->previous_campaign);
+			$stat=$this->db->get('campaignz');
+
+			if($stat->row()->payment_status == 1)
 			{
-				return ($unpaid + $trafficked->row()->value_after_percentage + $this->check_previous_unpaid($campaign->previous_campaign,$website));
+				$this->db->where('invoiced', 0);
+				$this->db->where('website', $website);
+				$this->db->where('campaign', $campaign->previous_campaign);
+				$trafficked=$this->db->get('websites_campaigns');
+				if($trafficked->num_rows() > 0)
+				{
+					return ($unpaid + $trafficked->row()->value_after_percentage + $this->check_previous_unpaid($campaign->previous_campaign,$website));
+				}
+
+				else return 0;
 			}
 
-			else return 0;
+			else
+				return ($unpaid + 0 + $this->check_previous_unpaid($campaign->previous_campaign,$website));
 		}
 
 		else
@@ -162,6 +173,7 @@ function __construct()
 			$data=array();
 			$data['id']=$key;
 			$data['payment_status']=2;
+			$data['payment_date']=date("Y-m-d");
 			$datas[]=$data;
 		}
 
@@ -285,42 +297,223 @@ function __construct()
 		
 	}
 
+	function return_previous_campaigns($campaigns)
+	{
+		$this->db->where_in('id',$campaigns);
+		$campaigns=$this->db->get('campaignz');
+		$previous_campaigns = "";
+		if($campaigns->num_rows() > 0)
+		{
+
+			foreach($campaigns->result() as $camp)
+			{
+				if($camp->previous_campaign != 0)
+				{
+					$prev[] = $camp->previous_campaign;
+					$previous_campaigns .= $camp->previous_campaign ."," ;
+				}
+			}
+			if(isset($prev))
+				return $previous_campaigns . $this->return_previous_campaigns($prev);
+			else
+				return $previous_campaigns;
+
+		}
+		return;
+
+	}
+
  	function gen_report()
 	{
 		$date = explode('-', $_POST['month']);
 		$query="select * from campaignz where month(start_date) = " . $date[1] . " and year(start_date) = " . $date[0];
 		$res = $this->db->query($query);
-		foreach($res->result() as $r)
+
+
+		if($res->num_rows() > 0)
 		{
-			$campaigns[]=$r->id;
-			$campaign_names[$r->id]=$r->name;
-			$campaign_effectives[$r->id] = $r->effective_cpa_cpc_or_cpm;
+			foreach($res->result() as $r)
+			{
+				$campaigns[]=$r->id;
+				$campaign_names[$r->id]=$r->name;
+				$campaign_effectives[$r->id] = $r->effective_cpa_cpc_or_cpm;
+			}
+
+			
+			$previous_campaigns=$this->return_previous_campaigns($campaigns);
+
+			$previous_campaigns = explode(",", $previous_campaigns);
+
+
+			$this->db->where_in('campaign', $campaigns);
+			$this->db->where('website', $_POST['website']);
+			$websites_campaigns=$this->db->get('websites_campaigns');
+			
+		
+
+			$table = "<table border='1'>";
+			$table .= "<tr><th>Campaign Name</th><th>Delivery</th><th>Effective CPA, CPC or CPM</th><th>Value</th><th>%</th><th>Revenue</th><th>Previous Unpaid</th><th>Total Unpaid</th></tr>";
+			foreach($websites_campaigns->result() as $cmp)
+			{
+				$unpaid = $this->check_previous_unpaid($cmp->campaign, $_POST['website']);
+				$table .= "<tr>";
+				$table .= "<td>". $campaign_names[$cmp->campaign] ."</td>";
+				$table .= "<td>". $cmp->deliveries ."</td>";
+				$table .= "<td>". $campaign_effectives[$cmp->campaign] ."</td>";
+				$table .= "<td>". $cmp->value_before_percentage ."</td>";
+				$table .= "<td>". $cmp->percentage ."</td>";
+				$table .= "<td>". $cmp->value_after_percentage ."</td>";
+				$table .= "<td>" .  $unpaid  . "</td>";
+				$table .= "<td>". ($cmp->value_after_percentage + $unpaid) ."</td>";
+				$table .= "</tr>";
+			}
+		
+
+			$this->db->where_not_in("id", $previous_campaigns);
+			$this->db->where('month(start_date) < ', $date[1], true);
+			$this->db->where('year(start_date) <= ', $date[0], true);
+			$this->db->where('payment_status', 1);
+			$result=$this->db->get('campaignz');
+
+			// echo $this->db->last_query();
+			// //$query="select * from campaignz where month(start_date) < " . $date[1] . " and year(start_date) <= " . $date[0] . " and payment_status = 1";
+			// //$res = $this->db->query($query);
+
+
+			$campaigns = array();
+			foreach($result->result() as $r)
+			{
+				$campaigns[]=$r->id;
+				$campaign_names[$r->id]=$r->name;
+			}
+
+			if(count($campaigns) > 0)
+			{
+				$this->db->where_in('campaign', $campaigns);
+				$this->db->where('website', $_POST['website']);
+				$previous_unpaid=$this->db->get('websites_campaigns');
+
+				foreach($previous_unpaid->result() as $cmp)
+				{
+					$unpaid = $this->check_previous_unpaid($cmp->campaign, $_POST['website']);
+					$table .= "<tr>";
+					$table .= "<td>". $campaign_names[$cmp->campaign] ."</td>";
+					$table .= "<td></td>";
+					$table .= "<td></td>";
+					$table .= "<td></td>";
+					$table .= "<td></td>";
+					$table .= "<td></td>";
+					$table .= "<td></td>";
+					$table .= "<td>". ($cmp->value_after_percentage + $unpaid) ."</td>";
+					$table .= "</tr>";
+				}
+
+
+
+			}
+			$table .= "</table>";	
+			echo $table;		
+		}
+		$date = explode('-', $_POST['month']);
+		$query="select * from campaignz where month(payment_date) = " . $date[1] . " and year(payment_date) = " . $date[0] . " and payment_status = 2";
+		$paid = $this->db->query($query);
+
+		$monthly_paid_totals = 0;
+		//echo $this->db->last_query();
+		if($paid->num_rows())
+		{
+			$campaigns=array();
+			$campaign_names = array();
+
+			foreach($paid->result() as $r)
+			{
+				$campaigns[]=$r->id;
+				$campaign_names[$r->id]=$r->name;
+				$campaign_periods[$r->id]=$r->start_date;
+			}
+
+
+			$this->db->where_in('campaign', $campaigns);
+			$this->db->where('website', $_POST['website']);
+			$this->db->where('invoiced', 0);
+			$paid_this_month=$this->db->get('websites_campaigns');
+
+			$table = "<br><br>Campaigns Paid By Advertiser in " . date("M", strtotime($_POST['month'])) . "<table border='1'>";
+			$table .= "<tr><th>Campaign Name</th><th>Campaign Period</th><th>Amount</th><th>Exchange Rate</th><th>Amount TZS</th></tr>";
+			
+			foreach($paid_this_month->result() as $paid_month)
+			{
+				$table .= "<tr>";
+				$table .= "<td>". $campaign_names[$paid_month->campaign] ."</td>";
+				$table .= "<td>". date("M Y",strtotime($campaign_periods[$paid_month->campaign])) ."</td>";
+				$table .= "<td>". $paid_month->value_after_percentage ."</td>";
+				$table .= "<td>1,600</td>";
+				$table .= "<td>". ($paid_month->value_after_percentage * 1600) ."</td>";
+				$table .= "</tr>";
+				$monthly_paid_totals += $paid_month->value_after_percentage * 1600;
+			}
+
+			echo $table . "</table>";
 		}
 
+		$this->db->select_min('start_date');
+		$min_date = $this->db->get('campaignz');
 
-		$this->db->where_in('campaign', $campaigns);
-		$this->db->where('website', $_POST['website']);
-		$websites_campaigns=$this->db->get('websites_campaigns');
+		$min=$min_date->row();
 
-		$table = "<table border='1'>";
-		$table .= "<tr><th>Campaign Name</th><th>Delivery</th><th>effective CPA, CPC or CPM</th><th>Value</th><th>%</th><th>Revenue</th><th>Previous Unpaid</th><th>Total Unapid</th></tr>";
-		foreach($websites_campaigns->result() as $cmp)
+
+		$min_date = new DateTime(date($min->start_date));
+		$reporting_date = new DateTime(date( $_POST['month'] . "-" ."01" ));
+
+		$min_date->format("Y-m-d");
+
+		$interval = $min_date->diff($reporting_date);
+
+		$ints= $interval->format('%R%m'); 
+
+		$table = "<br><br>Please Invoice PinPoint<table border='1'>";
+		$table .= "<tr><th>Month</th><th>Amount TZS</th></tr>";
+
+		for($i=0;$i<$ints;$i++)
 		{
-			$unpaid = $this->check_previous_unpaid($cmp->campaign, $_POST['website']);
-			$table .= "<tr>";
-			$table .= "<td>". $campaign_names[$cmp->campaign] ."</td>";
-			$table .= "<td>". $cmp->deliveries ."</td>";
-			$table .= "<td>". $campaign_effectives[$cmp->campaign] ."</td>";
-			$table .= "<td>". $cmp->value_before_percentage ."</td>";
-			$table .= "<td>". $cmp->percentage ."</td>";
-			$table .= "<td>". $cmp->value_after_percentage ."</td>";
-			$table .= "<td>" .  $unpaid  . "</td>";
-			$table .= "<td>". ($cmp->value_after_percentage + $unpaid) ."</td>";
-			$table .= "</tr>";
-		}
-		$table .= "</table>";
+			$reporting_date->sub(new DateInterval('P1M'));
+			$query="select * from campaignz where month(payment_date) = " . $reporting_date->format("m") . " and year(payment_date) = " . $reporting_date->format("Y") . " and payment_status = 2";
+			$previous_paid = $this->db->query($query);
 
-		echo $table;
+			//echo $this->db->last_query();
+			if($previous_paid->num_rows())
+			{
+				$campaigns=array();
+				$campaign_names = array();
+
+				foreach($previous_paid->result() as $r)
+				{
+					$campaigns[]=$r->id;
+					$campaign_names[$r->id]=$r->name;
+					$campaign_periods[$r->id]=$r->start_date;
+				}
+
+
+				$this->db->where_in('campaign', $campaigns);
+				$this->db->where('website', $_POST['website']);
+				$this->db->where('invoiced', 0);
+				$paid_previous_months=$this->db->get('websites_campaigns');
+
+				$sum = 0;
+				foreach($paid_previous_months->result() as $ppm)
+				{
+					$sum += $ppm->value_after_percentage;
+				}
+
+				$table .= "<tr><td>" . $reporting_date->format("F-Y") . "</td><td>" . $sum * 1600 . "</td></tr>";
+			}
+
+		}
+
+		$table .= "<tr><td>" . date("F-Y",strtotime($_POST['month'] . "-" ."01" )) . "</td><td>" . $monthly_paid_totals . "</td></tr>";
+
+		echo $table . "</table>";
+
 	}
 	
 	
